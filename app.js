@@ -145,7 +145,7 @@ const Listing = require('./model/listings'); // Correct path to listings.js
 const methodoverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const app = express();
-const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
+// const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 const wrapAsync=require("./utils/wrapasync.js")
 app.engine("ejs", ejsMate); // Use ejs-mate for all ejs files
 app.set("view engine", "ejs");
