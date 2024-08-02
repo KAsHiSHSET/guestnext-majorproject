@@ -138,6 +138,7 @@ app.listen(3000, () => {
 
 
 */
+/*
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -145,7 +146,7 @@ const Listing = require('./model/listings'); // Correct path to listings.js
 const methodoverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const app = express();
-// const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
+const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 const wrapAsync=require("./utils/wrapasync.js")
 app.engine("ejs", ejsMate); // Use ejs-mate for all ejs files
 app.set("view engine", "ejs");
@@ -283,6 +284,127 @@ app.use((err,req,res,next)=>{
    
 }
 )
-app.listen(8080, () => {
+const port=process.env.PORT||8080;
+app.listen(port, () => {
     console.log("Server is running on port 8080");
+});
+*/
+const express = require('express');
+const mongoose = require('mongoose');
+const path = require('path');
+const Listing = require('./model/listings'); // Correct path to listings.js
+const methodoverride = require('method-override');
+const ejsMate = require('ejs-mate');
+const app = express();
+const wrapAsync = require('./utils/wrapasync.js');
+const ExpressError = require('./utils/ExpressError.js');
+
+const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
+
+// Set up EJS engine and views directory
+app.engine('ejs', ejsMate);
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Middleware to parse JSON and URL-encoded data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(methodoverride('_method'));
+app.use(express.static(path.join(__dirname, '/public')));
+
+// Connect to MongoDB
+async function main() {
+    try {
+        await mongoose.connect(MONGO_URL, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 30000, // Increase server selection timeout
+            socketTimeoutMS: 45000, // Increase socket timeout
+        });
+        console.log("Connected to DB");
+    } catch (err) {
+        console.error("Error connecting to DB:", err);
+    }
+}
+main();
+
+// Basic route to check server status
+app.get("/", (req, res) => {
+    res.render("home");
+});
+
+// Route to show all listings
+app.get("/listings", wrapAsync(async (req, res) => {
+    const alllistings = await Listing.find({});
+    res.render("listings/index", { alllistings });
+}));
+
+app.get("/privacy", (req, res) => {
+    res.render("privacy");
+});
+
+app.get("/terms", (req, res) => {
+    res.render("terms");
+});
+
+// Create new route
+app.get("/listing/new", (req, res) => {
+    res.render("listings/new");
+});
+
+// Show listing by ID
+app.get("/listings/:id", wrapAsync(async (req, res) => {
+    const { id } = req.params;
+    const listing = await Listing.findById(id);
+    res.render("listings/show", { listing });
+}));
+
+// Create new listing
+app.post("/listings", wrapAsync(async (req, res) => {
+    if (!req.body.listing) {
+        throw new ExpressError(400, "Send valid data for listing");
+    }
+    const newListing = new Listing(req.body.listing);
+    await newListing.save();
+    res.redirect("/listings");
+}));
+
+// Edit listing route
+app.get("/listings/:id/edit", wrapAsync(async (req, res) => {
+    const { id } = req.params;
+    const listing = await Listing.findById(id);
+    res.render("listings/edit", { listing });
+}));
+
+// Update listing route
+app.put("/listings/:id", wrapAsync(async (req, res) => {
+    if (!req.body.listing) {
+        throw new ExpressError(400, "Send valid data for listing");
+    }
+    const { id } = req.params;
+    await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+    res.redirect("/listings/" + id);
+}));
+
+// Delete listing
+app.delete("/listings/:id", wrapAsync(async (req, res) => {
+    const { id } = req.params;
+    await Listing.findByIdAndDelete(id);
+    res.redirect("/listings");
+}));
+
+// Handle 404 errors
+app.all("*", (req, res, next) => {
+    next(new ExpressError(404, "Page Not Found"));
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    const { statusCode = 500, message = "Something went wrong" } = err;
+    res.status(statusCode).render("error", { err });
+});
+
+const port = process.env.PORT || 8080;
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
