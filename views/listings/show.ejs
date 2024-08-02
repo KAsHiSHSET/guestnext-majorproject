@@ -1,0 +1,50 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WanderLust</title>
+</head> -->
+<%layout("/listings/layouts/boilerplate")%>
+<body>
+    <div class="row">
+        <div class="col-8 offset-3">
+    <h3>Listing Details:</h3>
+    </div>
+    <div class=" card col-6 offset-3 show-card">
+        
+     
+            <img src="<%=listing.images%>" class="card-img-top show-img" alt="image">
+            <div class="card-body">
+                <br>
+              <p class="card-text"><b><%=listing.title%></b>
+                <br>
+                <%=listing.description%><br>
+              
+                  
+                    &#8377;<%= (listing.price !== null && listing.price !== undefined) ? listing.price.toLocaleString("en-IN") : "N/A" %>/night
+                
+                <%=listing.location%><br>
+                <%=listing.country%><br>
+            </p>
+            
+          </div>
+    </div>
+
+    
+    <br>
+    
+</body>
+</div>
+<div class="btns">
+    <a href="/listings/<%=listing._id%>/edit" class="btn btn-dark col-1 offset-3 edit-btn">Edit </a>
+  
+   
+    <form action="/listings/<%=listing._id%>?_method=DELETE" method="POST">
+       
+        <button type="submit" class="btn btn-dark  offset-5">Delete</button>
+    </form>
+</div>
+</div>
+
+<!-- </html> -->
